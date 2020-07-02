@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<XmlSerilier xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Id="1" Name="测试">
+  <List>0</List>
+  <List>1</List>
+  <List>2</List>
+</XmlSerilier>
