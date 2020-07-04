@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,7 +22,21 @@ public class test : MonoBehaviour {
         //GameObject go = GameObject.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/CoinPrefab.prefab"));
 
         //SerilizeTest();
-        XmlDeserilize();
+        //XmlDeserilize();
+        // BinarySerTest();
+        // BinaryDeserialize();
+        readAssetsTest();
+    }
+
+    void readAssetsTest()
+    {
+        AssetsSerilize ta = UnityEditor.AssetDatabase.LoadAssetAtPath<AssetsSerilize>("Assets/assetsTest.asset");
+        Debug.Log(ta.id);
+        Debug.Log(ta.name);
+        foreach (string str in ta.testList)
+        {
+            Debug.Log(str);
+        }
     }
 
     public void SerilizeTest()
@@ -52,9 +67,36 @@ public class test : MonoBehaviour {
         XmlSerializer xml = new XmlSerializer(typeof(XmlSerilier));
         XmlSerilier serilier = (XmlSerilier)xml.Deserialize(fs);
         fs.Close();
-        Debug.Log(serilier.Id);
-        Debug.Log(serilier.Name);
-        foreach(int i in serilier.List)
-            Debug.Log(i);
+    }
+
+    void BinarySerTest()
+    {
+        XmlSerilier serilize = new XmlSerilier();
+        serilize.Id = 1;
+        serilize.Name = "二进制测试";
+        serilize.List = new List<int>();
+        serilize.List.Add(0);
+        serilize.List.Add(1);
+        serilize.List.Add(2);
+        BinarySerialize(serilize);
+    }
+
+    void BinarySerialize(XmlSerilier serilize)
+    {
+        FileStream fs = new FileStream(Application.dataPath + "/test.bytes", FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+        BinaryFormatter bfm = new BinaryFormatter();
+        bfm.Serialize(fs, serilize);
+        fs.Close();
+    }
+
+    void BinaryDeserialize()
+    {
+        TextAsset ta = UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/test.bytes");
+        MemoryStream ms = new MemoryStream(ta.bytes);
+        BinaryFormatter bf = new BinaryFormatter();
+        XmlSerilier serilize = (XmlSerilier)bf.Deserialize(ms);
+        ms.Close();
+        Debug.Log(serilize.Id);
+        Debug.Log(serilize.Name);
     }
 }
