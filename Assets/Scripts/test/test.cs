@@ -30,13 +30,15 @@ public class test : MonoBehaviour {
 
     void readAssetsTest()
     {
-        AssetsSerilize ta = UnityEditor.AssetDatabase.LoadAssetAtPath<AssetsSerilize>("Assets/assetsTest.asset");
-        Debug.Log(ta.id);
-        Debug.Log(ta.name);
-        foreach (string str in ta.testList)
-        {
-            Debug.Log(str);
-        }
+
+        //AssetsSerilize ta = UnityEditor.AssetDatabase.LoadAssetAtPath<AssetsSerilize>("Assets/assetsTest.asset");
+        //Debug.Log(ta.id);
+        //Debug.Log(ta.name);
+        //foreach (string str in ta.testList)
+        //{
+        //    Debug.Log(str);
+        //}
+
     }
 
     public void SerilizeTest()
@@ -91,12 +93,12 @@ public class test : MonoBehaviour {
 
     void BinaryDeserialize()
     {
-        TextAsset ta = UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/test.bytes");
-        MemoryStream ms = new MemoryStream(ta.bytes);
-        BinaryFormatter bf = new BinaryFormatter();
-        XmlSerilier serilize = (XmlSerilier)bf.Deserialize(ms);
-        ms.Close();
-        Debug.Log(serilize.Id);
-        Debug.Log(serilize.Name);
+        //TextAsset ta = UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/test.bytes");
+        //MemoryStream ms = new MemoryStream(ta.bytes);
+        //BinaryFormatter bf = new BinaryFormatter();
+        //XmlSerilier serilize = (XmlSerilier)bf.Deserialize(ms);
+        //ms.Close();
+        //Debug.Log(serilize.Id);
+        //Debug.Log(serilize.Name);
     }
 }
