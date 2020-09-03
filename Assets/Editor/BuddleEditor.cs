@@ -75,14 +75,55 @@ public class BuddleEditor
 
         }
 
+        foreach (string name in m_AllFileDir.Keys)
+        {
+            SetABName(name, m_AllFileDir[name]);
+        }
+
+        foreach (string name in m_AllPrefabDir.Keys)
+        {
+            SetABName(name, m_AllPrefabDir[name]);
+        }
+
+        // 非常耗时，最好不要做
+        //AssetDatabase.SaveAssets();
+        //AssetDatabase.Refresh();
+
+        string []oldABNames = AssetDatabase.GetAllAssetBundleNames();
+        for (int i = 0; i < oldABNames.Length; i++)
+        {
+            AssetDatabase.RemoveAssetBundleName(oldABNames[i], true);
+            EditorUtility.DisplayProgressBar("清除AB名字","名字：" + oldABNames[i], i * 1.0f / oldABNames.Length);
+        }
+
         EditorUtility.ClearProgressBar();
-
-
 
 
         Debug.Log("打包");
         //BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, EditorUserBuildSettings.activeBuildTarget);
         //AssetDatabase.Refresh();
+    }
+
+    static void SetABName(string name, string path)
+    {
+        AssetImporter assetImport = AssetImporter.GetAtPath(path);
+        if (assetImport == null)
+        {
+            Debug.LogError("不存在此路径文件：" + path);
+        }
+        else
+        {
+            assetImport.assetBundleName = name;
+        }
+
+    }
+
+    static void SetABName(string name, List<string> paths)
+    {
+        for (int i = 0; i < paths.Count; i++)
+        {
+            SetABName(name, paths[i]);
+        }
     }
 
     static bool ContainAllFileAB(string path)
