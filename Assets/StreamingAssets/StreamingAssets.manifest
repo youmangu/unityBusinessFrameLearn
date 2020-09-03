@@ -1,10 +1,7 @@
 ManifestFileVersion: 0
-CRC: 1668855491
+CRC: 2773714860
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
-      Name: flags
-      Dependencies: {}
-    Info_1:
-      Name: coin
+      Name: flag
       Dependencies: {}

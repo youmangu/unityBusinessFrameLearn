@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 367594081
+CRC: 1459860892
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3c64ab4f6b11e5a3cd3174abc086d636
+    Hash: a237209116fa11d472eef9ad35698083
   TypeTreeHash:
     serializedVersion: 2
     Hash: 4956b4d7373a70cc872cac983908d706
@@ -24,5 +24,5 @@ ClassTypes:
 - Class: 224
   Script: {instanceID: 0}
 Assets:
-- Assets/Resources/CoinPrefab.prefab
+- Assets/Prefabs/Flag/Flag.prefab
 Dependencies: []

@@ -52,7 +52,7 @@ public class BuddleEditor
                 List<string> allDepencies = new List<string>();
                 for (int j = 0; j < depencies.Length; j++)
                 {
-                    Debug.Log(depencies[j]);
+                    //Debug.Log(depencies[j]);
                     if (!ContainAllFileAB(depencies[i]) && depencies[i].EndsWith(".cs"))
                     {
                         m_AllFileAB.Add(depencies[i]);
@@ -85,9 +85,7 @@ public class BuddleEditor
             SetABName(name, m_AllPrefabDir[name]);
         }
 
-        // 非常耗时，最好不要做
-        //AssetDatabase.SaveAssets();
-        //AssetDatabase.Refresh();
+        BuildAssetBuddle();
 
         string []oldABNames = AssetDatabase.GetAllAssetBundleNames();
         for (int i = 0; i < oldABNames.Length; i++)
@@ -96,12 +94,13 @@ public class BuddleEditor
             EditorUtility.DisplayProgressBar("清除AB名字","名字：" + oldABNames[i], i * 1.0f / oldABNames.Length);
         }
 
+        AssetDatabase.Refresh();
+
         EditorUtility.ClearProgressBar();
 
 
         Debug.Log("打包");
-        //BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, EditorUserBuildSettings.activeBuildTarget);
-        //AssetDatabase.Refresh();
+       
     }
 
     static void SetABName(string name, string path)
@@ -124,6 +123,27 @@ public class BuddleEditor
         {
             SetABName(name, paths[i]);
         }
+    }
+
+    static void BuildAssetBuddle()
+    {
+        string[] allBuddles = AssetDatabase.GetAllAssetBundleNames();
+        Dictionary<string, string> resPathDic = new Dictionary<string, string>();
+        for (int i = 0; i < allBuddles.Length; i++)
+        {
+            string[] allBuddlePaths = AssetDatabase.GetAssetPathsFromAssetBundle(allBuddles[i]);
+            for (int j = 0; j < allBuddlePaths.Length; j++)
+            {
+                if (allBuddlePaths[j].EndsWith(".cs"))
+                    continue;
+                Debug.Log("此AB包 " + allBuddles[i] + " 下面包含的路径有：" + allBuddlePaths[j]);
+                resPathDic.Add(allBuddlePaths[j], allBuddles[i]);
+            }
+        }
+
+        // 打包生成自己的配置表
+        BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, EditorUserBuildSettings.activeBuildTarget);
+        AssetDatabase.Refresh();
     }
 
     static bool ContainAllFileAB(string path)
