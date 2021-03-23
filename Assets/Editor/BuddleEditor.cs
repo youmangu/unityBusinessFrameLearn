@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.IO;
+using System.Xml.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 public class BuddleEditor
 {
+    public static string m_BundleTargetPath = Application.streamingAssetsPath;
     private static string ABCONFIGPATH = "Assets/Editor/ABConfig.asset";
 
     // key 是AB包的名字，value是路径
@@ -19,7 +23,9 @@ public class BuddleEditor
     [MenuItem("Tools/打包")]
     public static void Build()
     {
+        m_AllFileAB.Clear();
         m_AllFileDir.Clear();
+        m_AllPrefabDir.Clear();
         ABConfig abConfig = AssetDatabase.LoadAssetAtPath<ABConfig>(ABCONFIGPATH);
 
         foreach (ABConfig.FileDirABName fileDir in abConfig.m_AllFileDirAB)
@@ -36,14 +42,14 @@ public class BuddleEditor
         }
 
         // 返回的是 guid 数组
-        string []str = AssetDatabase.FindAssets("t:Prefab", abConfig.m_AllPrefabPath.ToArray());
+        string []str = AssetDatabase.FindAssets("t:prefab", abConfig.m_AllPrefabPath.ToArray());
 
         for (int i = 0; i < str.Length; i++)  
         {
             // 根据GUID获取到路径
             string path = AssetDatabase.GUIDToAssetPath(str[i]);
             // 显示进度条
-            EditorUtility.DisplayProgressBar("查找Prafab", "Prefab:" + path, i * 1.0f / str.Length);
+            EditorUtility.DisplayProgressBar("查找Prafab", "prefab:" + path, i * 1.0f / str.Length);
 
             if (!ContainAllFileAB(path))
             {
@@ -52,8 +58,8 @@ public class BuddleEditor
                 List<string> allDepencies = new List<string>();
                 for (int j = 0; j < depencies.Length; j++)
                 {
-                    //Debug.Log(depencies[j]);
-                    if (!ContainAllFileAB(depencies[i]) && depencies[i].EndsWith(".cs"))
+                    // Debug.Log("depency: "+depencies[j]);
+                    if (!ContainAllFileAB(depencies[i]) && !depencies[i].EndsWith(".cs"))
                     {
                         m_AllFileAB.Add(depencies[i]);
                         allDepencies.Add(depencies[i]);
@@ -63,7 +69,7 @@ public class BuddleEditor
 
                 if (m_AllPrefabDir.ContainsKey(obj.name))
                 {
-                    Debug.LogError("存在相同名字的prefab，名字：" + obj.name);
+                    Debug.LogError("存在相同名字的prefab，位置：" + path + " 名字： " + obj.name);
                 }
                 else { 
                     m_AllPrefabDir.Add(obj.name, allDepencies);
@@ -85,7 +91,7 @@ public class BuddleEditor
             SetABName(name, m_AllPrefabDir[name]);
         }
 
-        BuildAssetBuddle();
+        BuildAssetBundle();
 
         string []oldABNames = AssetDatabase.GetAllAssetBundleNames();
         for (int i = 0; i < oldABNames.Length; i++)
@@ -125,7 +131,7 @@ public class BuddleEditor
         }
     }
 
-    static void BuildAssetBuddle()
+    static void BuildAssetBundle()
     {
         string[] allBuddles = AssetDatabase.GetAllAssetBundleNames();
         Dictionary<string, string> resPathDic = new Dictionary<string, string>();
@@ -136,16 +142,118 @@ public class BuddleEditor
             {
                 if (allBuddlePaths[j].EndsWith(".cs"))
                     continue;
-                Debug.Log("此AB包 " + allBuddles[i] + " 下面包含的路径有：" + allBuddlePaths[j]);
+                //Debug.Log("此AB包 " + allBuddles[i] + " 下面包含的资源文件路径有：" + allBuddlePaths[j]);
                 resPathDic.Add(allBuddlePaths[j], allBuddles[i]);
             }
         }
 
+        DeleteAB();
         // 打包生成自己的配置表
+        WriteData(resPathDic);
+
+
         BuildPipeline.BuildAssetBundles(Application.streamingAssetsPath, BuildAssetBundleOptions.ChunkBasedCompression, EditorUserBuildSettings.activeBuildTarget);
         AssetDatabase.Refresh();
     }
 
+    static void WriteData(Dictionary<string, string> resPathDic)
+    {
+        AssetBundleconfig config = new AssetBundleconfig();
+        config.ABList = new List<ABBase>();
+        foreach (string path in resPathDic.Keys)
+        {
+            ABBase abBase = new ABBase();
+            abBase.Path = path;
+            abBase.Crc = CRC32.GetCRC32(path);
+            abBase.ABName = resPathDic[path];
+            abBase.AssetName = path.Remove(0, path.LastIndexOf("/") + 1);
+            abBase.ABDependence = new List<string>();
+            string[] resDependce = AssetDatabase.GetDependencies(path);
+            for (int i = 0; i < resDependce.Length; i++)
+            {
+                string tempPath = resDependce[i];
+                if (tempPath == path || path.EndsWith(".cs"))
+                    continue;
+                string abName = "";
+                if (resPathDic.TryGetValue(tempPath, out abName))
+                {
+                    if (abName == resPathDic[path])
+                        continue;
+
+                    if(!abBase.ABDependence.Contains(abName))
+                    {
+                        abBase.ABDependence.Add(abName);
+                    }
+                }
+            }
+            config.ABList.Add(abBase);
+        }
+
+        // 写入xml
+        string xmlPath = Application.dataPath + "/AssetbundleConfig.xml";
+        if (File.Exists(xmlPath)) File.Delete(xmlPath);
+        FileStream fileStream = new FileStream(xmlPath, FileMode.Create, FileAccess.Write, FileShare.Write);
+        StreamWriter sw = new StreamWriter(fileStream, System.Text.Encoding.UTF8);
+        XmlSerializer xmlSerilier = new XmlSerializer(config.GetType());
+        xmlSerilier.Serialize(sw, config);
+        sw.Close();
+        fileStream.Close();
+
+        // 写入二进制
+        string bytePath = m_BundleTargetPath + "/AssetbundleConfig.bytes";
+        if (File.Exists(bytePath)) File.Delete(bytePath);
+        FileStream byteStream = new FileStream(bytePath, FileMode.Create, FileAccess.Write, FileShare.Write);
+        BinaryFormatter bf = new BinaryFormatter();
+        bf.Serialize(byteStream, config);
+        byteStream.Close();
+
+    }
+
+    // 删除无用的AB包
+    static void DeleteAB()
+    {
+        // 1. 获取所有的AB包名
+        string[] allBundleNames = AssetDatabase.GetAllAssetBundleNames();
+        // 2. 获取目录信息 DirectoryInfo
+        DirectoryInfo directoryInfo = new DirectoryInfo(m_BundleTargetPath);
+        // 3. 获取文件信息  FileInfo[]
+        FileInfo[] fileInfos = directoryInfo.GetFiles("*", SearchOption.AllDirectories);
+        // 4. fileInfo 中是否包含 AB 或者是否是 .meta 文件， 如果没使用，则删除
+        for (int i = 0; i < fileInfos.Length; i++)
+        {
+            if (ConatinABName(fileInfos[i].Name, allBundleNames) || fileInfos[i].Name.EndsWith(".meta"))
+                continue;
+            else
+            {
+                if (File.Exists(fileInfos[i].FullName))
+                    File.Delete(fileInfos[i].FullName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 遍历文件夹里的文件名与设置
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="strs"></param>
+    /// <returns></returns>
+    static bool ConatinABName(string name, string[] strs)
+    {
+        foreach(string str in strs)
+        {
+            if (str.Equals(name))
+                return true;
+        }
+
+        return false;
+    }
+
+
+    /// <summary>
+    /// 是否包含在已经有的AB包里，用来做荣誉剔除
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
     static bool ContainAllFileAB(string path)
     {
         for (int i = 0; i < m_AllFileAB.Count; i++)

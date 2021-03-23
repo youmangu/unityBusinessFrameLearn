@@ -6,7 +6,7 @@ using UnityEngine;
 public class AssetsSerilize : ScriptableObject
 {
     public int id;
-    public string name;
+    public string assetName;
     public List<string> testList;
 
 }
