@@ -63,12 +63,11 @@ public class BuddleEditor
                 List<string> allDepencies = new List<string>();
                 for (int j = 0; j < depencies.Length; j++)
                 {
-                    // Debug.Log("depency: "+depencies[j]);
-                    if (!ContainAllFileAB(depencies[i]) && !depencies[i].EndsWith(".cs"))
+                    
+                    if (!ContainAllFileAB(depencies[j]) && !depencies[j].EndsWith(".cs"))
                     {
-                        m_AllFileAB.Add(depencies[i]);
-                        allDepencies.Add(depencies[i]);
-
+                        m_AllFileAB.Add(depencies[j]);
+                        allDepencies.Add(depencies[j]);
                     }
                 }
 
@@ -266,7 +265,7 @@ public class BuddleEditor
     {
         for (int i = 0; i < m_AllFileAB.Count; i++)
         {
-            if (path == m_AllFileAB[i] || path.Contains(m_AllFileAB[i]))
+            if (path == m_AllFileAB[i] || path.Contains(m_AllFileAB[i]) && (path.Replace(m_AllFileAB[i], "")[0] == '/'))
                 return true;
         }
 
