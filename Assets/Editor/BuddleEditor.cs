@@ -207,7 +207,7 @@ public class BuddleEditor
         {
             ab.Path = "";
         }
-        string bytePath = m_BundleTargetPath + "/AssetbundleConfig.bytes";
+        string bytePath =  "Assets/GameData/Data/ABData/AssetbundleConfig.bytes";
         if (File.Exists(bytePath)) File.Delete(bytePath);
         FileStream byteStream = new FileStream(bytePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
         BinaryFormatter bf = new BinaryFormatter();

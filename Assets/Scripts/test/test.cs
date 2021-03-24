@@ -31,7 +31,8 @@ public class test : MonoBehaviour {
 
     void TestLoadAB()
     {
-        TextAsset testAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/AssetbundleConfig.bytes");
+        AssetBundle abConfig1 = AssetBundle.LoadFromFile(Application.streamingAssetsPath + "/assetbundleconfig");
+        TextAsset testAsset = abConfig1.LoadAsset<TextAsset>("AssetbundleConfig");
         MemoryStream ms = new MemoryStream(testAsset.bytes);
         BinaryFormatter bf = new BinaryFormatter();
         AssetBundleconfig abConfig = (AssetBundleconfig)bf.Deserialize(ms);
