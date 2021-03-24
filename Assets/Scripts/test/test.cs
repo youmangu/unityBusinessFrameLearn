@@ -25,7 +25,7 @@ public class test : MonoBehaviour {
         //XmlDeserilize();
         // BinarySerTest();
         // BinaryDeserialize();
-        readAssetsTest();
+        //readAssetsTest();
     }
 
     void readAssetsTest()

@@ -18,11 +18,15 @@ public class BuddleEditor
     private static List<string> m_AllFileAB = new List<string>();
 
     // 单个prefab的ab包
-    private static Dictionary<string, List<string>> m_AllPrefabDir = new Dictionary<string, List<string>>(); 
+    private static Dictionary<string, List<string>> m_AllPrefabDir = new Dictionary<string, List<string>>();
+
+    // 储存所有有效路径
+    private static List<string> m_ConfigFile = new List<string>();
 
     [MenuItem("Tools/打包")]
     public static void Build()
     {
+        m_ConfigFile.Clear();
         m_AllFileAB.Clear();
         m_AllFileDir.Clear();
         m_AllPrefabDir.Clear();
@@ -37,7 +41,8 @@ public class BuddleEditor
             else
             {
                 m_AllFileDir.Add(fileDir.ABName, fileDir.Path);
-                m_AllFileAB.Add(fileDir.ABName);
+                m_AllFileAB.Add(fileDir.Path);
+                m_ConfigFile.Add(fileDir.Path);
             }
         }
 
@@ -50,7 +55,7 @@ public class BuddleEditor
             string path = AssetDatabase.GUIDToAssetPath(str[i]);
             // 显示进度条
             EditorUtility.DisplayProgressBar("查找Prafab", "prefab:" + path, i * 1.0f / str.Length);
-
+            m_ConfigFile.Add(path);
             if (!ContainAllFileAB(path))
             {
                 GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -101,12 +106,10 @@ public class BuddleEditor
         }
 
         AssetDatabase.Refresh();
-
         EditorUtility.ClearProgressBar();
 
+        Debug.Log("打包完成");
 
-        Debug.Log("打包");
-       
     }
 
     static void SetABName(string name, string path)
@@ -140,10 +143,11 @@ public class BuddleEditor
             string[] allBuddlePaths = AssetDatabase.GetAssetPathsFromAssetBundle(allBuddles[i]);
             for (int j = 0; j < allBuddlePaths.Length; j++)
             {
-                if (allBuddlePaths[j].EndsWith(".cs"))
+                if (allBuddlePaths[j].EndsWith(".cs") || !ValidPath(allBuddlePaths[j]))
                     continue;
                 //Debug.Log("此AB包 " + allBuddles[i] + " 下面包含的资源文件路径有：" + allBuddlePaths[j]);
-                resPathDic.Add(allBuddlePaths[j], allBuddles[i]);
+                if(ValidPath(allBuddlePaths[j]))
+                    resPathDic.Add(allBuddlePaths[j], allBuddles[i]);
             }
         }
 
@@ -192,7 +196,7 @@ public class BuddleEditor
         // 写入xml
         string xmlPath = Application.dataPath + "/AssetbundleConfig.xml";
         if (File.Exists(xmlPath)) File.Delete(xmlPath);
-        FileStream fileStream = new FileStream(xmlPath, FileMode.Create, FileAccess.Write, FileShare.Write);
+        FileStream fileStream = new FileStream(xmlPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
         StreamWriter sw = new StreamWriter(fileStream, System.Text.Encoding.UTF8);
         XmlSerializer xmlSerilier = new XmlSerializer(config.GetType());
         xmlSerilier.Serialize(sw, config);
@@ -200,9 +204,13 @@ public class BuddleEditor
         fileStream.Close();
 
         // 写入二进制
+        foreach (ABBase ab in config.ABList)  // 此处为优化，可以减少二进制文件容量大小
+        {
+            ab.Path = "";
+        }
         string bytePath = m_BundleTargetPath + "/AssetbundleConfig.bytes";
         if (File.Exists(bytePath)) File.Delete(bytePath);
-        FileStream byteStream = new FileStream(bytePath, FileMode.Create, FileAccess.Write, FileShare.Write);
+        FileStream byteStream = new FileStream(bytePath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
         BinaryFormatter bf = new BinaryFormatter();
         bf.Serialize(byteStream, config);
         byteStream.Close();
@@ -221,7 +229,7 @@ public class BuddleEditor
         // 4. fileInfo 中是否包含 AB 或者是否是 .meta 文件， 如果没使用，则删除
         for (int i = 0; i < fileInfos.Length; i++)
         {
-            if (ConatinABName(fileInfos[i].Name, allBundleNames) || fileInfos[i].Name.EndsWith(".meta"))
+            if (ConatinABName(fileInfos[i].Name, allBundleNames) || fileInfos[i].Name.EndsWith(".meta") )
                 continue;
             else
             {
@@ -259,6 +267,20 @@ public class BuddleEditor
         for (int i = 0; i < m_AllFileAB.Count; i++)
         {
             if (path == m_AllFileAB[i] || path.Contains(m_AllFileAB[i]))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 是否有效路径
+    /// </summary>
+    static bool ValidPath(string path)
+    {
+        for (int i = 0; i < m_ConfigFile.Count; i++)
+        {
+            if (path.Contains(m_ConfigFile[i]))
                 return true;
         }
 

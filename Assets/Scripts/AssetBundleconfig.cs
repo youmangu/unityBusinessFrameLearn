@@ -14,7 +14,7 @@ public class AssetBundleconfig
 public class ABBase
 {
     [XmlAttribute("Path")]
-    public string Path { set; get; }
+    public string Path { set; get; }   // 方便在xml文件里查看
     [XmlAttribute("Crc")]
     public uint Crc { set; get; }
     [XmlAttribute("ABName")]
