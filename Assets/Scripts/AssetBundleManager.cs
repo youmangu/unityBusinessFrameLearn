@@ -67,7 +67,7 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
         ResourceItem item = null;
         if (m_ResourceItemDic.TryGetValue(crc, out item) || item == null)
         {
-            Debug.LogError("LoadResourceAssetBundle error: cannot find crc {0} in AssetBundleConfig", crc);
+            Debug.LogError("LoadResourceAssetBundle error: cannot find crc "+ crc + " in AssetBundleConfig");
             return item;
         }
 

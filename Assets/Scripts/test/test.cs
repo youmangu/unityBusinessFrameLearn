@@ -96,6 +96,7 @@ public class test : MonoBehaviour {
         FileStream fs = new  FileStream(Application.dataPath + "/test.xml", FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
         XmlSerializer xml = new XmlSerializer(typeof(XmlSerilier));
         XmlSerilier serilier = (XmlSerilier)xml.Deserialize(fs);
+        Debug.Log(serilier.Id);
         fs.Close();
     }
 
