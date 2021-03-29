@@ -156,6 +156,119 @@ public class DoubleLinkedList<T> where T : class, new()
             Tail = Head;
         }
     }
+}
+
+
+public class CMapList<T> where T : class, new()
+{
+    public DoubleLinkedList<T> m_DLink = new DoubleLinkedList<T>();
+    public Dictionary<T, DoubleLinkedListNode<T>> m_FindMap = new Dictionary<T, DoubleLinkedListNode<T>>();
+
+    ~CMapList()
+    {
+        Clear();
+    }
+    /// <summary>
+    /// 插入到头部
+    /// </summary>
+    /// <param name="t"></param>
+    public void InsertToHead(T t)
+    {
+        DoubleLinkedListNode<T> node = null;
+        if (m_FindMap.TryGetValue(t, out node) && node != null)
+        {
+            m_DLink.MoveToHead(t);
+            return;
+        }
+
+        m_DLink.AddToHeader(t);
+        m_FindMap.Add(t, node);
+    }
+
+    /// <summary>
+    /// 弹出尾部
+    /// </summary>
+    public void Pop()
+    {
+        if (m_DLink.Tail != null)
+            RemoveNode(m_DLink.Tail.t);
+    }
+
+    /// <summary>
+    /// 删除某个节点
+    /// </summary>
+    /// <param name="t"></param>
+    public void RemoveNode(T t)
+    {
+        DoubleLinkedListNode<T> node = null;
+        if (!m_FindMap.TryGetValue(t,out node) || node == null)
+            return;
+        m_DLink.RemoveNode(node);
+        m_FindMap.Remove(t);
+    }
+
+    /// <summary>
+    /// 获取尾部节点
+    /// </summary>
+    /// <returns></returns>
+    public T Back()
+    {
+        return m_DLink.Tail == null ? null : m_DLink.Tail.t;
+    }
+
+    /// <summary>
+    /// 节点个数
+    /// </summary>
+    /// <returns></returns>
+    public int Size()
+    {
+        return m_FindMap.Count;
+    }
+
+    /// <summary>
+    /// 节点是否存在
+    /// </summary>
+    /// <param name="t"></param>
+    /// <returns></returns>
+    public bool Find(T t)
+    {
+        DoubleLinkedListNode<T> node = null;
+        if (!m_FindMap.TryGetValue(t, out node) || node == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 刷新节点，把节点移到头部
+    /// </summary>
+    /// <param name="t"></param>
+    /// <returns></returns>
+    public bool Refresh(T t)
+    {
+        DoubleLinkedListNode<T> node = null;
+        if (!m_FindMap.TryGetValue(t, out node) || node == null)
+        {
+            return false;
+        }
+
+        m_DLink.MoveToHead(node);
+        return true;
+    }
+
+    /// <summary>
+    /// 清空列表
+    /// </summary>
+    public void Clear()
+    {
+        while (m_DLink.Tail != null)
+        {
+            RemoveNode(m_DLink.Tail.t);
+        }
+    }
+
 
 
 }
