@@ -4,6 +4,147 @@ using UnityEngine;
 
 public class ResourceManager : Singleton<ResourceManager>
 {
+    public bool m_LoadFromAssetBundle = false;
+    // 缓存使用的资源列表
+    public Dictionary<uint, ResourceItem> AssetDic { get; set; } = new Dictionary<uint, ResourceItem>();
+    // 缓存引用计数为0的资源列表， 达到缓存最大的时候释放这个列表里最早没用的资源
+    protected CMapList<ResourceItem> m_NoRefrenceAssetMapList = new CMapList<ResourceItem>();
+
+    /// <summary>
+    /// 同步资源加载，外部直接调用，仅加载不需要实例化的资源，例如 Texture, 音频等等
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    public T LoadResource<T>(string path) where T : UnityEngine.Object
+    {
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        uint crc = CRC32.GetCRC32(path);
+        ResourceItem item = GEtCacheResourceItem(crc);
+        if (item != null)
+        {
+            return item.m_Obj as T;
+        }
+
+        T obj = null;
+#if UNITY_EDITOR
+        if (!m_LoadFromAssetBundle)
+        {
+            obj = LoadAssetByEditor<T>(path);
+            item = AssetBundleManager.Instance.FindResourceItem(crc);
+        }
+#endif
+
+        if (obj == null)
+        {
+            item = AssetBundleManager.Instance.LoadResourceAssetBundle(crc);
+            if (item != null && item.m_AssetBundle != null)
+            {
+                obj = item.m_AssetBundle.LoadAsset<T>(item.m_AssetBundleName);
+            }
+        }
+
+        CacheResource(path, ref item, crc, obj);
+
+        return obj;
+    }
+
+    void CacheResource(string name, ref ResourceItem item, uint crc, Object obj, int addRefcount = 1)
+    {
+        // 缓存太多，清除最早没有使用的资源
+        WashOut();
+
+        if (item == null)
+            Debug.LogError("");
+        if (obj == null)
+            Debug.LogError("");
+
+        item.m_Obj = obj;
+        item.m_Guid = obj.GetInstanceID();
+        item.m_LastUseTime = Time.realtimeSinceStartup;
+        item.RefCount += addRefcount;
+        ResourceItem oldItem = null;
+        if (AssetDic.TryGetValue(item.m_Crc, out oldItem))
+        {
+            AssetDic[item.m_Crc] = item;
+        }
+        else {
+            AssetDic.Add(item.m_Crc, item);
+        }
+    }
+
+    /// <summary>
+    /// 缓存太多，清除最早没有使用的资源
+    /// </summary>
+    protected void WashOut()
+    {
+        // 当当前内存使用大于80%，我们来进行清除最早没用的资源
+        {
+            if (m_NoRefrenceAssetMapList.Size() <= 0)
+                return;
+
+            ResourceItem item = m_NoRefrenceAssetMapList.Back();
+            DestroyResourceItem(item, true);
+            m_NoRefrenceAssetMapList.Pop();
+        }
+    }
+
+    /// <summary>
+    /// 回收同一个资源
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="destroy"></param>
+    protected void DestroyResourceItem(ResourceItem item, bool destroy = false)
+    {
+        if (item == null || item.RefCount > 0)
+            return;
+
+        if (!destroy)
+        {
+            m_NoRefrenceAssetMapList.InsertToHead(item);
+            return;
+        }
+
+        if (!AssetDic.Remove(item.m_Crc))
+            return;
+
+        // 释放AssetBundle引用
+        AssetBundleManager.Instance.ReleaseAsset(item);
+
+        if (item.m_Obj != null)
+        {
+            item.m_Obj = null;
+        }
+    }
+
+#if UNITY_EDITOR
+    protected T LoadAssetByEditor<T>(string path) where T : UnityEngine.Object
+    {
+        return UnityEditor.AssetDatabase.LoadAssetAtPath<T>(path);
+    }
+#endif
+
+    ResourceItem GEtCacheResourceItem(uint crc, int addrefcount = 1)
+    {
+        ResourceItem item = null;
+        if (AssetDic.TryGetValue(crc, out item))
+        {
+            if (item != null)
+            {
+                item.RefCount += addrefcount;
+                item.m_LastUseTime = Time.realtimeSinceStartup;
+
+                if (item.RefCount <= 1)
+                {
+                    m_NoRefrenceAssetMapList.RemoveNode(item);
+                }
+            }
+        }
+
+        return item;
+    }
 
 }
 
