@@ -51,6 +51,47 @@ public class ResourceManager : Singleton<ResourceManager>
         return obj;
     }
 
+    /// <summary>
+    /// 不需要的实例化的资源释放
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="destroy"></param>
+    /// <returns></returns>
+    public bool ReleaseResource(Object obj, bool destroy = false)
+    {
+        if (obj == null)
+            return false;
+
+        ResourceItem item = null;
+        foreach (ResourceItem res in AssetDic.Values)
+        {
+            if (res.m_Guid == obj.GetInstanceID())
+            {
+                item = res;
+                break;
+                    
+            }
+        }
+        if (item == null)
+        {
+            Debug.LogError("AssetDic 不存在该资源：" + obj.name + " 可能释放了多长");
+            return false;
+        }
+
+        item.RefCount--;
+
+        DestroyResourceItem(item, destroy);
+        return true;
+    }
+
+    /// <summary>
+    /// 缓存加载的资源
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="item"></param>
+    /// <param name="crc"></param>
+    /// <param name="obj"></param>
+    /// <param name="addRefcount"></param>
     void CacheResource(string name, ref ResourceItem item, uint crc, Object obj, int addRefcount = 1)
     {
         // 缓存太多，清除最早没有使用的资源
