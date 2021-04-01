@@ -201,6 +201,9 @@ public class ResourceItem
     public int m_Guid = 0;
     // 资源最后使用的时间
     public float m_LastUseTime = 0.0f;
+    // 是否跳场景清掉
+    public bool m_Clear = true;
+
     // 引用计数
     protected int m_RefCount = 0;
     public int RefCount
