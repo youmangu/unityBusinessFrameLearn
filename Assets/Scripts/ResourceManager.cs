@@ -93,7 +93,7 @@ public class ResourceManager : Singleton<ResourceManager>
             return null;
 
         uint crc = CRC32.GetCRC32(path);
-        ResourceItem item = GEtCacheResourceItem(crc);
+        ResourceItem item = GetCacheResourceItem(crc);
         if (item != null)
         {
             return item.m_Obj as T;
@@ -239,6 +239,9 @@ public class ResourceManager : Singleton<ResourceManager>
         if (item.m_Obj != null)
         {
             item.m_Obj = null;
+#if UNITY_EDITOR
+            Resources.UnloadUnusedAssets();
+#endif
         }
     }
 
@@ -249,7 +252,7 @@ public class ResourceManager : Singleton<ResourceManager>
     }
 #endif
 
-    ResourceItem GEtCacheResourceItem(uint crc, int addrefcount = 1)
+    ResourceItem GetCacheResourceItem(uint crc, int addrefcount = 1)
     {
         ResourceItem item = null;
         if (AssetDic.TryGetValue(crc, out item))
@@ -272,14 +275,14 @@ public class ResourceManager : Singleton<ResourceManager>
     /// <summary>
     /// 异步加载资源（仅仅是不需要实例化的资源，例如音乐， 图片等）
     /// </summary>
-    public void AsyncLoadResource(string path, OnAsyncObjFinish deleFinish,  LoadResPriority priority, object param1 = null, object param2 = null, object param3 = null， uint crc = 0 )
+    public void AsyncLoadResource(string path, OnAsyncObjFinish deleFinish,  LoadResPriority priority, object param1 = null, object param2 = null, object param3 = null, uint crc = 0 )
     {
         if (crc == 0)
         {
             crc = CRC32.GetCRC32(path);
         }
 
-        ResourceItem item = GEtCacheResourceItem(crc);
+        ResourceItem item = GetCacheResourceItem(crc);
         if (item != null)
         {
             if (deleFinish != null)

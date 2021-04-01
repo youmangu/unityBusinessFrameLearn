@@ -9,11 +9,17 @@ public class GameStart : MonoBehaviour
     private void Awake()
     {
         AssetBundleManager.Instance.LoadAssetBundleConfig();
+        ResourceManager.Instance.Init(this);
     }
     // Start is called before the first frame update
     void Start()
     {
-        clip = ResourceManager.Instance.LoadResource<AudioClip>("Assets/GameData/Sounds/senlin.mp3");
+        ResourceManager.Instance.AsyncLoadResource("Assets/GameData/Sounds/menusound.mp3", OnLoadFinished, LoadResPriority.RES_MIDDLE);
+    }
+
+    private void OnLoadFinished(string path, Object obj, object param1 = null, object param2 = null, object param3 = null)
+    {
+        clip = obj as AudioClip;
         audioSource.clip = clip;
         audioSource.Play();
     }
@@ -25,8 +31,15 @@ public class GameStart : MonoBehaviour
         {
             audioSource.Stop();
             audioSource.clip = null;
-            ResourceManager.Instance.ReleaseResource(clip, true);
+            ResourceManager.Instance.ReleaseResource(clip);
             clip = null;
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+#if UNITY_EDITOR
+        Resources.UnloadUnusedAssets();
+#endif
     }
 }
