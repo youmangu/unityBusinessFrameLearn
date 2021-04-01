@@ -40,8 +40,8 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
         {
             ResourceItem abItem = new ResourceItem();
             abItem.m_Crc = abBase.Crc;
-            abItem.m_AssetName = abBase.ABName;
-            abItem.m_AssetBundleName = abBase.AssetName;
+            abItem.m_AssetBundleName = abBase.ABName;
+            abItem.m_AssetName = abBase.AssetName;
             abItem.m_DependAssetBundle = abBase.ABDependence;
 
             if (m_ResourceItemDic.ContainsKey(abItem.m_Crc))
@@ -65,7 +65,7 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
     public ResourceItem LoadResourceAssetBundle(uint crc)
     {
         ResourceItem item = null;
-        if (m_ResourceItemDic.TryGetValue(crc, out item) || item == null)
+        if (!m_ResourceItemDic.TryGetValue(crc, out item) || item == null)
         {
             Debug.LogError("LoadResourceAssetBundle error: cannot find crc "+ crc + " in AssetBundleConfig");
             return item;

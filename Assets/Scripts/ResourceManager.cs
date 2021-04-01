@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ResourceManager : Singleton<ResourceManager>
 {
-    public bool m_LoadFromAssetBundle = false;
+    public bool m_LoadFromAssetBundle = true;
     // 缓存使用的资源列表
     public Dictionary<uint, ResourceItem> AssetDic { get; set; } = new Dictionary<uint, ResourceItem>();
     // 缓存引用计数为0的资源列表， 达到缓存最大的时候释放这个列表里最早没用的资源
@@ -32,8 +32,14 @@ public class ResourceManager : Singleton<ResourceManager>
 #if UNITY_EDITOR
         if (!m_LoadFromAssetBundle)
         {
-            obj = LoadAssetByEditor<T>(path);
             item = AssetBundleManager.Instance.FindResourceItem(crc);
+            if (item.m_Obj != null)
+            {
+                obj = item.m_Obj as T;
+            }
+            else
+                obj = LoadAssetByEditor<T>(path);
+            
         }
 #endif
 
@@ -42,7 +48,12 @@ public class ResourceManager : Singleton<ResourceManager>
             item = AssetBundleManager.Instance.LoadResourceAssetBundle(crc);
             if (item != null && item.m_AssetBundle != null)
             {
-                obj = item.m_AssetBundle.LoadAsset<T>(item.m_AssetBundleName);
+                if (item.m_Obj != null)
+                {
+                    obj = item.m_Obj as T;
+                }
+                else
+                    obj = item.m_AssetBundle.LoadAsset<T>(item.m_AssetName);
             }
         }
 
@@ -137,19 +148,19 @@ public class ResourceManager : Singleton<ResourceManager>
     /// </summary>
     /// <param name="item"></param>
     /// <param name="destroy"></param>
-    protected void DestroyResourceItem(ResourceItem item, bool destroy = false)
+    protected void DestroyResourceItem(ResourceItem item, bool destroyCache = false)
     {
         if (item == null || item.RefCount > 0)
             return;
 
-        if (!destroy)
+        if (!AssetDic.Remove(item.m_Crc))
+            return;
+
+        if (!destroyCache)
         {
             m_NoRefrenceAssetMapList.InsertToHead(item);
             return;
         }
-
-        if (!AssetDic.Remove(item.m_Crc))
-            return;
 
         // 释放AssetBundle引用
         AssetBundleManager.Instance.ReleaseAsset(item);
@@ -359,7 +370,7 @@ public class CMapList<T> where T : class, new()
         DoubleLinkedListNode<T> node = null;
         if (m_FindMap.TryGetValue(t, out node) && node != null)
         {
-            m_DLink.MoveToHead(t);
+            m_DLink.MoveToHead(node);
             return;
         }
 

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<AssetBundleconfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<AssetBundleconfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ABList Path="Assets/GameData/Data/ABData/AssetbundleConfig.bytes" Crc="2448085100" ABName="assetbundleconfig" AssetName="AssetbundleConfig.bytes" />
   <ABList Path="Assets/GameData/Prefabs/Attack.prefab" Crc="192126642" ABName="attack" AssetName="Attack.prefab" />
   <ABList Path="Assets/GameData/Shaders/Skybox.shader" Crc="2040549738" ABName="shader" AssetName="Skybox.shader" />
