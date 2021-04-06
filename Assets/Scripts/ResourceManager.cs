@@ -10,6 +10,29 @@ public enum LoadResPriority
     RES_NUM,
 }
 
+public class ResourceObj
+{
+    // 路径对应的crc
+    public uint m_Crc = 0;
+    // 存ResourceItem
+    public ResourceItem m_ResourceItem = null;
+    // 实例化出来的Gameobject
+    public GameObject m_CloneObj = null;
+    // 是否跳场景清楚
+    public bool m_bClear = true;
+    // 出错GuId
+    public long m_Guid = 0;
+
+    public void Reset()
+    {
+        m_Crc = 0;
+        m_RestItem = null;
+        m_CloneObj = null;
+        m_bClear = true;
+        m_Guid = 0;
+    }
+}
+
 public class AsyncLoadResParam
 {
     public List<AsyncCallBack> m_CallbackList = new List<AsyncCallBack>();
@@ -156,6 +179,64 @@ public class ResourceManager : Singleton<ResourceManager>
         // 条场景不清空缓存
         item.m_Clear = false;
         ReleaseResource(obj, false);
+
+    }
+
+    /// <summary>
+    /// 同步加载资源， 针对给Objectmanager的接口
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="resObj"></param>
+    /// <returns></returns>
+    public ResourceObj LoadResource(string path, ResourceObj resObj)
+    {
+        if (resObj == null)
+        {
+            return null;
+        }
+
+        uint crc = resObj.m_Crc == 0 ? CRC32.GetCRC32(path) : resObj.m_Crc;
+
+        ResourceItem item = GetCacheResourceItem(crc);
+        if (item != null)
+        {
+            resObj.m_ResourceItem = item;
+            return resObj;
+        }
+
+        Object obj = null;
+#if UNITY_EDITOR
+        if (!m_LoadFromAssetBundle)
+        {
+            item = AssetBundleManager.Instance.FindResourceItem(crc);
+            if (item.m_Obj != null)
+            {
+                obj = item.m_Obj as Object;
+            }
+            else
+                obj = LoadAssetByEditor<Object>(path) as Object;
+        }
+#endif
+
+        if (obj == null)
+        {
+            item = AssetBundleManager.Instance.LoadResourceAssetBundle(crc);
+            if (item != null && item.m_AssetBundle != null)
+            {
+                if (item.m_Obj != null)
+                {
+                    obj = item.m_Obj as Object;
+                }
+                else
+                    obj = item.m_AssetBundle.LoadAsset<Object>(item.m_AssetName) as Object;
+            }
+        }
+
+        CacheResource(path, ref item, crc, obj);
+        resObj.m_ResourceItem = item;
+        item.m_Clear = resObj.m_bClear;
+
+        return resObj;
 
     }
 
