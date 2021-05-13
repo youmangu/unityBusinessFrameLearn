@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class GameStart : MonoBehaviour
 {
-    public AudioSource audioSource;
-    AudioClip clip;
+    private GameObject obj;
     private void Awake()
     {
         GameObject.DontDestroyOnLoad(gameObject);
@@ -16,14 +15,13 @@ public class GameStart : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        ResourceManager.Instance.AsyncLoadResource("Assets/GameData/Sounds/menusound.mp3", OnLoadFinished, LoadResPriority.RES_MIDDLE);
+        //ResourceManager.Instance.AsyncLoadResource("Assets/GameData/Sounds/menusound.mp3", OnLoadFinished, LoadResPriority.RES_MIDDLE);
+        obj = ObjectManager.Instance.InstantiateObject("Assets/GameData/Prefabs/Attack.prefab", true);
     }
 
     private void OnLoadFinished(string path, Object obj, object param1 = null, object param2 = null, object param3 = null)
     {
-        clip = obj as AudioClip;
-        audioSource.clip = clip;
-        audioSource.Play();
+
     }
 
     // Update is called once per frame
@@ -31,10 +29,16 @@ public class GameStart : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.A))
         {
-            audioSource.Stop();
-            audioSource.clip = null;
-            ResourceManager.Instance.ReleaseResource(clip);
-            clip = null;
+            ObjectManager.Instance.ReleaseObject(obj);
+            obj = null;
+        }
+        else if (Input.GetKeyDown(KeyCode.D))
+        {
+            obj = ObjectManager.Instance.InstantiateObject("Assets/GameData/Prefabs/Attack.prefab", true);
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            ObjectManager.Instance.ReleaseObject(obj, 0, true);
         }
     }
 
